@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hangman Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            background-image: url(../Images/scrabble.jpg);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .word {
+            font-size: 30px;
+            letter-spacing: 5px;
+            margin: 20px 0;
+        }
+
+        .wrong-guesses {
+            margin: 10px 0;
+            color: #ff6347;
+        }
+
+        .remaining-attempts {
+            margin: 10px 0;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .guess-input {
+            margin: 10px 0;
+            font-size: 20px;
+            padding: 5px;
+            text-transform: uppercase;
+        }
+
+        .result {
+            margin: 20px 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .buttons {
+            margin-top: 20px;
+        }
+
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+
+        .btn-reset {
+            background-color: #ff6347;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Hangman Game</h1>
+        <img src="../Images/stickman.png" height="200px">
+        <div class="word" id="wordDisplay"></div>
+        <div class="remaining-attempts" id="remainingAttempts">Remaining attempts: 10</div>
+        <div class="wrong-guesses" id="wrongGuesses">Wrong guesses: </div>
+        <input type="text" id="guessInput" class="guess-input" maxlength="1" placeholder="Enter a letter" />
+        <button class="btn" id="guessBtn">Guess</button>
+        <div class="result" id="result"></div>
+        <div class="buttons">
+            <button class="btn btn-reset" id="resetBtn">Restart Game</button>
+        </div>
+        <br><br>
+        If you'd like to learn how to widen your vocabulary, please go <a href="customhtml.html">here</a>
+    </div>
+
+    <script>
+        // List of words to guess (several hundred possible words from a variety of topics)
+        const words = [
+            'javascript', 'hangman', 'html', 'css', 'react', 'node', 'express', 'hope', 'algorithm', 'python',
+            'variable', 'function', 'server', 'database', 'frontend', 'backend', 'javascript', 'array', 'object',
+            'const', 'let', 'boolean', 'condition', 'loop', 'iteration', 'json', 'xml', 'api', 'component', 'redux',
+            'angular', 'nodejs', 'expressjs', 'expressive', 'programming', 'debugging', 'typescript', 'typescript',
+            'method', 'search', 'bubble', 'quick', 'merge', 'sports', 'basketball', 'soccer', 'baseball', 'football',
+            'hockey', 'golf', 'tennis', 'swimming', 'rugby', 'boxing', 'badminton', 'volleyball', 'wrestling',
+            'cricket', 'athletics', 'gymnastics', 'cycling', 'karate', 'sport', 'swimmer', 'goalkeeper', 'referee',
+            'stadium', 'champion', 'medal', 'score', 'match', 'tournament', 'race', 'competition', 'winner', 'scoreboard',
+            'geography', 'mountain', 'river', 'desert', 'ocean', 'continent', 'country', 'city', 'town', 'village', 'island',
+            'volcano', 'plateau', 'hill', 'valley', 'forest', 'rainforest', 'weather', 'climate', 'map', 'atlas', 'compass',
+            'globe', 'coast', 'nationalpark', 'coastline', 'equator', 'latitude', 'longitude', 'capital', 'pyramid',
+            'biodiversity', 'archipelago', 'history', 'ancient', 'medieval', 'victorian', 'renaissance', 'war', 'battle',
+            'empire', 'dynasty', 'kingdom', 'revolution', 'renaissance', 'medieval', 'reign', 'ancient', 'civ', 'reform',
+            'ancestors', 'adventure', 'pharaoh', 'colosseum', 'technology', 'computer', 'internet', 'gadget', 'smartphone',
+            'tablet', 'laptop', 'cloud', 'server', 'wireless', 'bluetooth', 'cybersecurity', 'cryptocurrency', 'bitcoin',
+            'blockchain', 'electric', 'AI', 'machinelearning', 'automation', 'internetofthings', 'android', 'ios', 'app',
+            'cloudcomputing', 'technological', 'startup', 'innovation', 'gadget', 'robot', 'machine', 'network', 'wifi',
+            'scientific', 'physics', 'biology', 'chemistry', 'astronomy', 'earth', 'atom', 'molecule', 'energy', 'force',
+            'motion', 'gravity', 'quantum', 'cell', 'virus', 'bacteria', 'microscope', 'neuron', 'evolution', 'ecosystem',
+            'species', 'human', 'genetics', 'genome', 'laboratory', 'research', 'experiment', 'fossil', 'discovery',
+            'astronaut', 'telescope', 'planets', 'star', 'galaxy', 'universe', 'meteor', 'comet', 'moon', 'orbit', 'eclipse',
+            'space', 'rocket', 'blackhole', 'quantum', 'gravity', 'law', 'biome', 'light', 'planet', 'scientist',
+            'invention', 'periodic', 'physics', 'mathematics', 'astronaut', 'physics', 'proton', 'neutron', 'electron',
+            'solution', 'hypothesis', 'theory', 'experiment', 'hypothesis', 'chemical', 'molecule', 'reaction',
+            'laboratory', 'cellular', 'biology', 'organism', 'genetic', 'metabolism', 'enzyme', 'thermodynamics', 'enzyme',
+            'species', 'variety', 'climate', 'oceanography', 'geology', 'plate', 'tectonics', 'formation', 'crater',
+            'lava', 'shelter', 'resource', 'nutrition'
+        ];
+
+        let selectedWord = '';
+        let displayedWord = '';
+        let wrongGuesses = [];
+        let remainingAttempts = 10;
+        let gameOver = false;
+
+        // Function to select a random word
+        function selectWord() {
+            const randomIndex = Math.floor(Math.random() * words.length);
+            selectedWord = words[randomIndex];
+            displayedWord = '_'.repeat(selectedWord.length);
+            document.getElementById('wordDisplay').textContent = displayedWord;
+            document.getElementById('wrongGuesses').textContent = 'Wrong guesses: ';
+            document.getElementById('remainingAttempts').textContent = 'Remaining attempts: ' + remainingAttempts;
+            document.getElementById('result').textContent = '';
+            wrongGuesses = [];
+            remainingAttempts = 10;
+            gameOver = false;
+        }
+
+        // Function to handle a guess
+        function handleGuess() {
+            if (gameOver) return;
+
+            const guessInput = document.getElementById('guessInput');
+            const guess = guessInput.value.toLowerCase();
+            guessInput.value = '';
+
+            if (!guess || guess.length !== 1 || wrongGuesses.includes(guess)) {
+                return;
+            }
+
+            if (selectedWord.includes(guess)) {
+                // Correct guess
+                let newDisplayedWord = '';
+                for (let i = 0; i < selectedWord.length; i++) {
+                    newDisplayedWord += selectedWord[i] === guess ? guess : displayedWord[i];
+                }
+                displayedWord = newDisplayedWord;
+                document.getElementById('wordDisplay').textContent = displayedWord;
+
+                // Check if the player has won
+                if (displayedWord === selectedWord) {
+                    document.getElementById('result').textContent = 'You Win!';
+                    gameOver = true;
+                }
+            } else {
+                // Incorrect guess
+                wrongGuesses.push(guess);
+                remainingAttempts--;
+                document.getElementById('wrongGuesses').textContent = 'Wrong guesses: ' + wrongGuesses.join(', ');
+                document.getElementById('remainingAttempts').textContent = 'Remaining attempts: ' + remainingAttempts;
+
+                // Check if the player has lost
+                if (remainingAttempts === 0) {
+                    document.getElementById('result').textContent = 'You Lose! The word was: ' + selectedWord;
+                    gameOver = true;
+                }
+            }
+        }
+
+        // Event listener for the Guess button
+        document.getElementById('guessBtn').addEventListener('click', handleGuess);
+
+        // Event listener for the Enter key to guess
+        document.getElementById('guessInput').addEventListener('keypress', function (event) {
+            if (event.key === 'Enter') {
+                handleGuess();
+            }
+        });
+
+        // Event listener for restarting the game
+        document.getElementById('resetBtn').addEventListener('click', selectWord);
+
+        // Start a new game on page load
+        selectWord();
+    </script>
+
+</body>
+
+</html>
+
+
+
+
+
+<!--fully functioning code
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hangman Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            background-image: url(../Images/scrabble.jpg);
+        }
+
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .word {
+            font-size: 30px;
+            letter-spacing: 5px;
+            margin: 20px 0;
+        }
+
+        .wrong-guesses {
+            margin: 10px 0;
+            color: #ff6347;
+        }
+
+        .remaining-attempts {
+            margin: 10px 0;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .guess-input {
+            margin: 10px 0;
+            font-size: 20px;
+            padding: 5px;
+            text-transform: uppercase;
+        }
+
+        .result {
+            margin: 20px 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .buttons {
+            margin-top: 20px;
+        }
+
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+
+        .btn-reset {
+            background-color: #ff6347;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Hangman Game</h1>
+        <img src="../Images/stickman.png" height="200px">
+        <div class="word" id="wordDisplay"></div>
+        <div class="remaining-attempts" id="remainingAttempts">Remaining attempts: 10</div>
+        <div class="wrong-guesses" id="wrongGuesses">Wrong guesses: </div>
+        <input type="text" id="guessInput" class="guess-input" maxlength="1" placeholder="Enter a letter" />
+        <button class="btn" id="guessBtn">Guess</button>
+        <div class="result" id="result"></div>
+        <div class="buttons">
+            <button class="btn btn-reset" id="resetBtn">Restart Game</button>
+        </div>
+        <br><br>
+        If you'd like to learn how to widen your vocabulary, please go <a href="customhtml.html">here</a>
+    </div>
+
+    <script>
+        // List of words to guess
+        const words = ['javascript', 'hangman', 'html', 'css', 'react', 'node', 'express', 'hope'];
+        let selectedWord = '';
+        let displayedWord = '';
+        let wrongGuesses = [];
+        let remainingAttempts = 10;
+        let gameOver = false;
+
+        // Function to select a random word
+        function selectWord() {
+            const randomIndex = Math.floor(Math.random() * words.length);
+            selectedWord = words[randomIndex];
+            displayedWord = '_'.repeat(selectedWord.length);
+            document.getElementById('wordDisplay').textContent = displayedWord;
+            document.getElementById('wrongGuesses').textContent = 'Wrong guesses: ';
+            document.getElementById('remainingAttempts').textContent = 'Remaining attempts: ' + remainingAttempts;
+            document.getElementById('result').textContent = '';
+            wrongGuesses = [];
+            remainingAttempts = 10;
+            gameOver = false;
+        }
+
+        // Function to handle a guess
+        function handleGuess() {
+            if (gameOver) return;
+
+            const guessInput = document.getElementById('guessInput');
+            const guess = guessInput.value.toLowerCase();
+            guessInput.value = '';
+
+            if (!guess || guess.length !== 1 || wrongGuesses.includes(guess)) {
+                return;
+            }
+
+            if (selectedWord.includes(guess)) {
+                // Correct guess
+                let newDisplayedWord = '';
+                for (let i = 0; i < selectedWord.length; i++) {
+                    newDisplayedWord += selectedWord[i] === guess ? guess : displayedWord[i];
+                }
+                displayedWord = newDisplayedWord;
+                document.getElementById('wordDisplay').textContent = displayedWord;
+
+                // Check if the player has won
+                if (displayedWord === selectedWord) {
+                    document.getElementById('result').textContent = 'You Win!';
+                    gameOver = true;
+                }
+            } else {
+                // Incorrect guess
+                wrongGuesses.push(guess);
+                remainingAttempts--;
+                document.getElementById('wrongGuesses').textContent = 'Wrong guesses: ' + wrongGuesses.join(', ');
+                document.getElementById('remainingAttempts').textContent = 'Remaining attempts: ' + remainingAttempts;
+
+                // Check if the player has lost
+                if (remainingAttempts === 0) {
+                    document.getElementById('result').textContent = 'You Lose! The word was: ' + selectedWord;
+                    gameOver = true;
+                }
+            }
+        }
+
+        // Event listener for the Guess button
+        document.getElementById('guessBtn').addEventListener('click', handleGuess);
+
+        // Event listener for the Enter key to guess
+        document.getElementById('guessInput').addEventListener('keypress', function (event) {
+            if (event.key === 'Enter') {
+                handleGuess();
+            }
+        });
+
+        // Event listener for restarting the game
+        document.getElementById('resetBtn').addEventListener('click', selectWord);
+
+        // Start a new game on page load
+        selectWord();
+    </script>
+
+</body>
+
+</html>-->
